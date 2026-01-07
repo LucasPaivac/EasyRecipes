@@ -11,6 +11,7 @@ data class RecipeDto(
     val title: String,
     val image: String,
     val readyInMinutes: Int,
+    val servings: Int,
     @SerializedName("summary")
     val description: String
 )
