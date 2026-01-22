@@ -1,7 +1,8 @@
-package com.example.easyrecipes
+package com.example.easyrecipes.list.presentation.ui
 
-import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,15 +18,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -38,56 +39,82 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import com.example.easyrecipes.R
+import com.example.easyrecipes.common.model.RecipeDto
+import com.example.easyrecipes.list.presentation.ListViewModel
 
 @Composable
-fun RecipeListScreen(navController: NavController) {
+fun RecipeListScreen(
+    navController: NavController,
+    viewModel: ListViewModel
+) {
 
-    var recipes by rememberSaveable {
-        mutableStateOf<List<RecipeDto>>(emptyList())
-    }
+    val recipes by viewModel.uiRecipes.collectAsState()
+    val query by viewModel.query.collectAsState()
 
-    val apiService = Retrofit.retrofit.create(ApiRecipeService::class.java)
-    val callRecipes = apiService.getRandomRecipes()
-
-    if (recipes.isEmpty()) {
-        callRecipes.enqueue(object : Callback<RecipeResponse> {
-            override fun onResponse(
-                call: Call<RecipeResponse?>,
-                response: Response<RecipeResponse?>
-            ) {
-                if (response.isSuccessful) {
-                    val recipesResponse = response.body()?.recipes
-                    if (recipesResponse != null) {
-                        recipes = recipesResponse
-                    }
-                } else {
-                    Log.d("RecipeList", "Request error: ${response.errorBody()?.string()}")
-                }
-            }
-
-            override fun onFailure(
-                call: Call<RecipeResponse?>,
-                t: Throwable
-            ) {
-                Log.d("RecipeList", "Network error: ${t.message}")
-            }
-
+    RecipeListContent(
+        recipeList = recipes,
+        searchQuery = query,
+        searchValueChanged = viewModel::onQueryChange,
+        onClick = { recipeClicked ->
+            navController.navigate(route = "recipeDetail/${recipeClicked.id}")
         })
-    }
-
-    RecipeListContent(recipeList = recipes) { }
 
 }
 
 @Composable
-private fun RecipeListContent(recipeList: List<RecipeDto>, onClick: (RecipeDto) -> Unit) {
+private fun RecipeListContent(
+    recipeList: List<RecipeDto>,
+    searchQuery: String,
+    searchValueChanged: (String) -> Unit,
+    onClick: (RecipeDto) -> Unit
+) {
+
     Column(
         modifier = Modifier
-            .padding(8.dp)
+            .padding(16.dp)
     ) {
+
+        Row(
+            modifier = Modifier
+                .padding(top = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Hello!",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Image(
+                painter = painterResource(R.drawable.ic_hello),
+                contentDescription = "Hello Icon",
+                Modifier.size(24.dp)
+            )
+        }
+
+
+        Text(
+            modifier = Modifier
+                .padding(bottom = 12.dp, top = 4.dp),
+            text = "Wanna cook today?",
+            fontSize = 16.sp
+        )
+
+        ERSearchBar(
+            query = searchQuery,
+            placeHolder = "Search for recipes",
+            onValueChange = searchValueChanged,
+            onSearchClicked = {}
+        )
+
+        HorizontalDivider(
+            modifier = Modifier
+                .padding(bottom = 16.dp, top = 16.dp),
+            color = Color.LightGray.copy(alpha = 0.5f)
+        )
+
         RecipeList(recipeList = recipeList, onClick = onClick)
     }
 
@@ -126,6 +153,9 @@ private fun RecipeItem(recipeDto: RecipeDto, onClick: (RecipeDto) -> Unit) {
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier
             .fillMaxWidth()
+            .clickable {
+                onClick.invoke(recipeDto)
+            }
     ) {
         Row(
             modifier = Modifier
@@ -161,11 +191,7 @@ private fun RecipeItem(recipeDto: RecipeDto, onClick: (RecipeDto) -> Unit) {
                     fontSize = 14.sp
                 )
 
-                Row(
-                    modifier = Modifier
-                        .padding(top = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         modifier = Modifier
                             .width(14.dp)
@@ -216,11 +242,14 @@ private fun RecipeItem(recipeDto: RecipeDto, onClick: (RecipeDto) -> Unit) {
 }
 
 @Composable
-fun FeaturedRecipeItem(recipeDto: RecipeDto, onClick: (RecipeDto) -> Unit) {
+private fun FeaturedRecipeItem(recipeDto: RecipeDto, onClick: (RecipeDto) -> Unit) {
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(16f / 7f),
+            .aspectRatio(16f / 7f)
+            .clickable {
+                onClick.invoke(recipeDto)
+            },
         elevation = CardDefaults.cardElevation(
             defaultElevation = 6.dp
         ),
@@ -262,7 +291,7 @@ fun FeaturedRecipeItem(recipeDto: RecipeDto, onClick: (RecipeDto) -> Unit) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
+                    Image(
                         modifier = Modifier
                             .width(18.dp)
                             .height(18.dp),
@@ -293,7 +322,7 @@ fun FeaturedRecipeItem(recipeDto: RecipeDto, onClick: (RecipeDto) -> Unit) {
 
                     Spacer(modifier = Modifier.size(4.dp))
 
-                    Icon(
+                    Image(
                         modifier = Modifier
                             .width(18.dp)
                             .height(18.dp),

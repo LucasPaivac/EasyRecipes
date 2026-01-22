@@ -1,5 +1,6 @@
-package com.example.easyrecipes
+package com.example.easyrecipes.common.data
 
+import com.example.easyrecipes.BuildConfig
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -15,7 +16,7 @@ object Retrofit {
                 val original = chain.request()
                 val request = original.newBuilder()
                     .header("x-api-key", token)
-                    .build()
+                        .build()
                 chain.proceed(request = request)
             }
             .build()
