@@ -1,7 +1,7 @@
 # EasyRecipes — Android App (Jetpack Compose)
 
-EasyRecipes é um aplicativo Android desenvolvido em Kotlin, utilizando Jetpack Compose e arquitetura MVVM, que permite ao usuário descobrir, buscar e visualizar receitas detalhadas, consumindo a API pública Spoonacular.
-O projeto foi desenvolvido com foco em boas práticas modernas, separação de responsabilidades, performance e controle de consumo de API.
+EasyRecipes é um aplicativo Android desenvolvido em Kotlin, utilizando Jetpack Compose, arquitetura MVVM, Padrão Repository e Offline First, que permite ao usuário descobrir, buscar e visualizar receitas detalhadas, consumindo a API pública Spoonacular.
+O projeto foi desenvolvido com foco em boas práticas modernas, separação de responsabilidades, resiliência offline, performance e controle de consumo de API.
 
 ## Preview do App
 Telas principais do aplicativo:
@@ -13,8 +13,9 @@ Telas principais do aplicativo:
   - Campo de busca com debounce para evitar múltiplas requisições
   - Atualização da lista atual, sem navegação para outra tela
   - Retorno automático para a lista inicial ao limpar o campo
+  - Tratamento de erro de rede com feedback visual (Snackbar)
 
-### Lista de Receitas
+### Lista de Receitas (Offline First)
   - Carregamento inicial com receitas aleatórias
   - Cache em memória para evitar chamadas desnecessárias
   - Scroll performático com LazyColumn
@@ -27,22 +28,24 @@ Telas principais do aplicativo:
     - Calorias
     - Lista de ingredientes detalhada
 
-### Consumo otimizado da API usando:
-  - information?includeNutrition=true
-  - Reaproveitamento de dados já disponíveis
-
-### Arquitetura & Conceitos Aplicados
+### Arquitetura & Padrões Aplicados
   - MVVM (Model–View–ViewModel)
-  - Separação clara entre:
-    - UI (Compose)
-    - ViewModel
-    - Service (Retrofit)
-  - Uso de StateFlow para controle de estado reativo
+    - Separação clara entre:
+      - UI (Compose)
+      - ViewModel
+      - Data (Repository + Data Sources)
+    - Uso de StateFlow para controle de estado reativo
 
-### State Management
-  - MutableStateFlow + collectAsState()
-  - UI reativa baseada em estado
-  - Tratamento de loading e atualização automática da tela
+### Padrão Repository
+  - Implementação do Repository Pattern como única fonte de dados para a UI
+  - Abstração entre:
+    - RemoteDataSource (API – Retrofit)
+    - LocalDataSource (Room Database)
+  - O ViewModel não conhece a origem dos dados (local ou remoto)
+  - Facilita:
+    - Testes
+    - Evolução do projeto
+    - Manutenção e escalabilidade
 
 ### Debounce & Performance
    - Uso de debounce() e distinctUntilChanged() no fluxo de busca
